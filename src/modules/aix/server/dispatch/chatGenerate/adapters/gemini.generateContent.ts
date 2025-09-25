@@ -1,20 +1,20 @@
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
-import { approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './anthropic.messageCreate';
+import { aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
 
 
 // configuration
-const hotFixImagePartsFirst = true;
+const hotFixImagePartsFirst = true; // https://ai.google.dev/gemini-api/docs/image-understanding#tips-best-practices
 const hotFixReplaceEmptyMessagesWithEmptyTextPart = true;
 
 
-export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
-
-  // FIXME: this is a weak and hacky way to detect the image generation models - TODO: declare this as a param? with Resolution too?
-  const hotFixImageGenerationModels1 = model.id.includes('image-generation');
+export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, geminiSafetyThreshold: GeminiWire_Safety.HarmBlockThreshold, jsonOutput: boolean, _streaming: boolean): TRequest {
 
   // Note: the streaming setting is ignored as it only belongs in the path
+
+  // Pre-process CGR - approximate spill of System to User message - note: no need to flush as every message is not batched
+  const chatGenerate = aixSpillSystemToUser(_chatGenerate);
 
   // System Instructions
   let systemInstruction: TRequest['systemInstruction'] = undefined;
@@ -29,6 +29,10 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
         case 'doc':
           acc.parts.push(GeminiWire_ContentParts.TextPart(approxDocPart_To_String(part)));
           break;
+
+        case 'inline_image':
+          // we have already removed image parts from the system message
+          throw new Error('Gemini: images have to be in user messages, not in system message');
 
         case 'meta_cache_control':
           // ignore this breakpoint hint - Anthropic only
@@ -92,9 +96,30 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
     payload.generationConfig!.thinkingConfig = thinkingConfig;
   }
 
+  // [Gemini, 2025-05-20] Experimental Audio generation (TTS - audio only, no text): Request
+  const noTextOutput = !model.acceptsOutputs.includes('text');
+  if (model.acceptsOutputs.includes('audio')) {
+
+    // (undocumented) Adapt the request
+    delete payload.systemInstruction;
+    delete payload.generationConfig!.maxOutputTokens; // maxOutputTokens is not supported for audio-only output
+    payload.generationConfig!.temperature = 1;
+
+    // activate audio (/only) output
+    payload.generationConfig!.responseModalities = noTextOutput ? ['AUDIO'] : ['TEXT', 'AUDIO'];
+
+    // default voice config - list here: https://ai.google.dev/gemini-api/docs/speech-generation#voices
+    payload.generationConfig!.speechConfig = {
+      voiceConfig: {
+        prebuiltVoiceConfig: {
+          voiceName: 'Zephyr',
+        },
+      },
+    };
+  }
   // [Gemini, 2025-03-14] Experimental Image generation: Request
-  if (hotFixImageGenerationModels1) {
-    payload.generationConfig!.responseModalities = ['TEXT', 'IMAGE'];
+  else if (model.acceptsOutputs.includes('image')) {
+    payload.generationConfig!.responseModalities = noTextOutput ? ['IMAGE'] : ['TEXT', 'IMAGE'];
     // 2025-03-14: both APIs v1alpha and v1beta do not support specifying the resolution
     // payload.generationConfig!.mediaResolution = 'MEDIA_RESOLUTION_HIGH';
   }
@@ -109,7 +134,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, chatGenerate: Ai
   const validated = GeminiWire_API_Generate_Content.Request_schema.safeParse(payload);
   if (!validated.success) {
     console.warn('Gemini: invalid generateContent payload. Error:', validated.error.message);
-    throw new Error(`Invalid sequence for Gemini models: ${validated.error.errors?.[0]?.message || validated.error.message || validated.error}.`);
+    throw new Error(`Invalid sequence for Gemini models: ${validated.error.issues?.[0]?.message || validated.error.message || validated.error}.`);
   }
 
   return validated.data;
@@ -129,6 +154,8 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
     const parts: GeminiWire_ContentParts.ContentPart[] = [];
 
     if (hotFixImagePartsFirst) {
+      // https://ai.google.dev/gemini-api/docs/image-understanding#tips-best-practices
+      // "When using a single image with text, place the text prompt after the image part in the contents array."
       message.parts.sort((a, b) => {
         if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
         if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
@@ -151,6 +178,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[]): GeminiWire_
           parts.push(GeminiWire_ContentParts.TextPart(part.text));
           break;
 
+        case 'inline_audio':
         case 'inline_image':
           parts.push(GeminiWire_ContentParts.InlineDataPart(part.mimeType, part.base64));
           break;
