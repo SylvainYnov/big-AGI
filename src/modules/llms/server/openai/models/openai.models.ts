@@ -127,6 +127,67 @@ export const _knownOpenAIChatModels: ManualMappings = [
     benchmark: { cbaElo: 1344 }, // gpt-5-nano-high (same as target)
   },
 
+  // GPT-5.1 aliases -> ensure compatibility with "max_completion_tokens"
+  {
+    idPrefix: 'gpt-5.1',
+    label: 'GPT-5.1',
+    description: 'Alias release of GPT-5. Points to gpt-5-2025-08-07.',
+    symLink: 'gpt-5-2025-08-07',
+    hidden: true,
+    // copied from gpt-5-2025-08-07
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiRestoreMarkdown' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    benchmark: { cbaElo: 1442 },
+  },
+  {
+    idPrefix: 'gpt-5.1-mini',
+    label: 'GPT-5.1 Mini',
+    description: 'Alias release of GPT-5 Mini. Points to gpt-5-mini-2025-08-07.',
+    symLink: 'gpt-5-mini-2025-08-07',
+    hidden: true,
+    // copied from gpt-5-mini-2025-08-07
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'May 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_Tools_WebSearch, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiRestoreMarkdown' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
+    chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
+    benchmark: { cbaElo: 1388 },
+  },
+  {
+    idPrefix: 'gpt-5.1-nano',
+    label: 'GPT-5.1 Nano',
+    description: 'Alias release of GPT-5 Nano. Points to gpt-5-nano-2025-08-07.',
+    symLink: 'gpt-5-nano-2025-08-07',
+    hidden: true,
+    // copied from gpt-5-nano-2025-08-07
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'May 30, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [{ paramId: 'llmVndOaiReasoningEffort4' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
+    chatPrice: { input: 0.05, cache: { cType: 'oai-ac', read: 0.005 }, output: 0.4 },
+    benchmark: { cbaElo: 1344 },
+  },
+  {
+    idPrefix: 'gpt-5.1-chat-latest',
+    label: 'GPT-5.1 ChatGPT (Non-Thinking)',
+    description: 'Alias release of GPT-5 ChatGPT. Points to gpt-5-chat-latest.',
+    symLink: 'gpt-5-chat-latest',
+    hidden: true,
+    // copied from gpt-5-chat-latest
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    trainingDataCutoff: 'Sep 29, 2024',
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Responses, LLM_IF_OAI_PromptCaching],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    benchmark: { cbaElo: 1430 },
+  },
+
   /// [OpenAI, 2025-03-11] NEW `v1/responses` API MODELS - UNSUPPORTED YET
 
   // Computer Use Preview - INTERNAL MODEL FOR AGENTS - UNSUPPORTED YET
@@ -1021,6 +1082,11 @@ const _manualOrderingIdPrefixes = [
   'gpt-5-nano-20',
   'gpt-5-chat-latest',
   'gpt-5-',
+  'gpt-5.1-20',
+  'gpt-5.1-mini-20',
+  'gpt-5.1-nano-20',
+  'gpt-5.1-chat-latest',
+  'gpt-5.1-',
   // Reasoning models
   'o5-20',
   'o5-mini-20',
