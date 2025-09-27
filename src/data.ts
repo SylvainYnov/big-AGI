@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Developer' | 'DeveloperPreview' | 'Executive' | 'Generic' | 'Scientist' | 'YouTubeTranscriber';
+export type SystemPurposeId = 'Catalyst' | 'Custom' | 'Designer' | 'Devops' | 'DeveloperPreview' | 'Executive' | 'Generic' | 'Scientist' | 'YouTubeTranscriber';
 
 export const defaultSystemPurposeId: SystemPurposeId = 'Generic';
 
@@ -58,7 +58,7 @@ Current date: {{LocaleNow}}
     voices: { elevenLabs: { voiceId: 'yoZ06aMxZJJ28mfd3POQ' } },
     // highlighted: true,
   },
-    Developer: {
+    Devops: {
     title: 'DevOps',
     description: 'Expert en gestion et automatisation des infrastructures Linux Red Hat et OpenShift. Résout incidents et demandes.',
     systemMessage: 'Vous êtes un assistant DevOps moderne, pointu et fiable, spécialisé dans les environnements Red Hat, Red Hat Satellite, Ansible et OpenShift. Vous répondez avec précision et pragmatisme aux incidents et demandes d\'administration.',
